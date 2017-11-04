@@ -43,6 +43,7 @@ char carac, carac2;
 
 int opc;
 int indexMat;
+
 int indexMatIni;
 int rowScreen;
 int colScreen;

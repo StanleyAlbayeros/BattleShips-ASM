@@ -501,9 +501,10 @@ openP1:
 	mov ebx, [indexMat]
 	mov al, [taulell + ebx]
 	cmp al, ' '
-	jne openP1End
+	jne openP1NoAction
 	
 	xor ecx, ecx
+	
 
 	mov cl, 'O'
 	mov [taulell + ebx], cl
@@ -516,6 +517,7 @@ openP1:
 	xor ecx, ecx
 	mov cl, 'T'
 	mov [taulell + ebx], cl
+	inc tocat
 
 	openP1End:
 	
@@ -523,6 +525,8 @@ openP1:
 	mov [carac], cl
 
 	call printch
+
+	openP1NoAction:
 
 	pop ecx
 	pop ebx
@@ -551,12 +555,44 @@ openP1:
 ; Cap
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 openContinuousP1:
-	push ebp
+push ebp
 	mov  ebp, esp
+	push eax
+	push ebx
 
+	openContinuousLoop:
 
+	call getMoveP1
+	mov al, [carac2]
+	
+	cmp al, 's'
+	je openContinuousLoopEnd
 
+	cmp al, ' '
+	jne movePos
+	call openP1
+	jmp OpenContinuousLoop
 
+	movePos:
+	call moveCursorP1
+
+	mov eax, [rowCur]
+	mov [row], eax
+	xor eax, eax
+
+	xor bl, bl
+	mov bl, [colCur]
+	mov [col], bl
+	xor bl, bl
+
+	call posCurScreenP1
+
+	jmp openContinuousLoop
+
+	openContinuousLoopEnd:
+
+	pop ebx
+	pop eax
 	mov esp, ebp
 	pop ebp
 	ret
