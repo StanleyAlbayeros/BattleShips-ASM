@@ -570,7 +570,13 @@ push ebp
 
 	cmp al, ' '
 	jne movePos
-	call openP1
+	call openP1	
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	call sunk_boat
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 	jmp OpenContinuousLoop
 
 	movePos:
@@ -586,6 +592,8 @@ push ebp
 	xor bl, bl
 
 	call posCurScreenP1
+
+
 
 	jmp openContinuousLoop
 
@@ -621,9 +629,322 @@ push ebp
 sunk_boat:
 	push ebp
 	mov  ebp, esp
+	push eax
+	push ebx
+	push ecx
+	push edx
+
+	;;NOS POSICIONAMOS
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea + ebx]		
+	mov cl, [taulell + ebx]
+	;;;;;;;;;;;;;;;;;;;;
+	mov ch, 0				;;contador
+	;;;;;;;;;;;;;;;;;;;;;
+	mov [sunk], 3
+	cmp cl, 'T'
+	jne notSunk
+	jmp mirarDerechaLoop
+	
+	notSunk: 
+	mov [sunk], 0
+
+	jmp byeSunk
+
+;____________________________________________________________________________________________________________________
+
+	mirarDerechaLoop:
+	
+	inc [col]
+	cmp [col], 'H'
+	jg mirarAbajoLoopStart
+
+	call calcIndexP1
+	mov ebx, [indexMat]
+
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+
+	cmp al, 0					;miramos la pos derecha
+	je mirarAbajoLoopStart
+
+	
+	
+	cmp cl, 'T'
+	jne notSunk
+
+
+	mov ah , '0'					;dir drecha
+	;;;;;;;;;;;;;;;;;;;;;	
+	inc ch
+	;;;;;;;;;;;;;;;;;;;;;
+
+
+	jmp mirarDerechaLoop
+
+
+;____________________________________________________________________________________________________________________
+
+	mirarAbajoLoopStart:		;;reseteamos los indices
+	
+	mov bl, [colCur]
+	mov [col], bl
+	mov ch, 0
+
+
+	
+	mirarAbajoLoop:
+		
+	add [row], 1
+	cmp [row], 8
+	jg mirarIzquierdaLoopStart
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+	cmp al, 0				;miramos la pos de abajo
+	je mirarIzquierdaLoopStart
+	cmp cl, 'T'
+	jne notSunk
+	
+
+	mov ah , '1'					;dir abajo
+	;;;;;;;;;;;;;;;;;;;;;	
+	inc ch
+	;;;;;;;;;;;;;;;;;;;;;
+
+	
+
+	jmp mirarAbajoLoop
+
+;____________________________________________________________________________________________________________________	
+
+	mirarIzquierdaLoopStart:		;;reseteamos los indices
+	
+	mov ebx, [rowCur]
+	mov [row], ebx
+	mov ch, 0
+
+	mirarIzquierdaLoop:
+
+	dec [col]
+	cmp [col], 'A'
+	jl mirarArribaLoopStart
+
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+
+	cmp al, 0				;miramos la pos de izquierda
+	je mirarArribaLoopStart
+	cmp cl, 'T'
+	jne notSunk
+	mov ah , '2'					;dir izquierda
+	;;;;;;;;;;;;;;;;;;;;;	
+	inc ch
+	;;;;;;;;;;;;;;;;;;;;;
 
 
 
+	jmp mirarIzquierdaLoop
+
+
+;____________________________________________________________________________________________________________________	
+
+
+	mirarArribaLoopStart:		;;reseteamos los indices
+	
+	mov bl, [colCur]
+	mov [col], bl
+	mov ch, 0
+
+
+	mirarArribaLoop:
+
+
+	dec [row]
+	cmp [row], 0
+	jl pintarStart
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+	cmp al, 0				;miramos la pos de arriba
+	je pintarStart
+	cmp cl, 'T'
+	jne notSunk
+	mov ah , '3'					;dir arriba
+	;;;;;;;;;;;;;;;;;;;;;	
+	inc ch
+	;;;;;;;;;;;;;;;;;;;;;
+
+
+	
+
+	jmp mirarArribaLoop
+
+;____________________________________________________________________________________________________________________
+
+	pintarStart:
+	mov bl, [colCur]
+	mov [col], bl
+	mov ebx, [rowCur]
+	mov [row], ebx
+	mov [carac], 'H'
+	call posCurScreenP1
+	call printch 
+
+
+;; PPPPINTTAAAR
+;____________________________________________________________________________________________________________________
+
+	pintarDerechaLoop:
+	
+	inc [col]
+	cmp [col], 'H'
+	jg pintarAbajoLoopStart
+
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+
+	cmp al, 0					;miramos la pos derecha
+	je pintarAbajoLoopStart
+
+	mov [taulell+ebx], 'H'
+	call posCurScreenP1
+	call printch 
+	mov [sunk], 1
+
+	jmp pintarDerechaLoop
+
+
+;____________________________________________________________________________________________________________________
+
+	pintarAbajoLoopStart:		;;reseteamos los indices
+	
+	mov bl, [colCur]
+	mov [col], bl
+	
+	pintarAbajoLoop:
+		
+	add [row], 1
+	cmp [row], 8
+	jg pintarIzquierdaLoopStart
+
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+	
+	cmp al, 0				;miramos la pos de abajo
+	je pintarIzquierdaLoopStart
+
+	
+	mov [taulell+ebx], 'H'
+	call posCurScreenP1
+	call printch 	
+	mov [sunk], 2
+
+	jmp pintarAbajoLoop
+
+;____________________________________________________________________________________________________________________	
+
+	pintarIzquierdaLoopStart:		;;reseteamos los indices
+	
+	mov ebx, [rowCur]
+	mov [row], ebx
+
+
+	pintarIzquierdaLoop:
+
+	dec [col]
+	cmp [col], 'A'
+	jl pintarArribaLoopStart
+
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+	cmp al, 0				;miramos la pos de izquierda
+	je pintarArribaLoopStart
+
+
+	mov [taulell+ebx], 'H'
+	call posCurScreenP1
+	call printch 
+	mov [sunk], 1
+
+	jmp pintarIzquierdaLoop
+
+
+;____________________________________________________________________________________________________________________	
+
+
+	pintarArribaLoopStart:		;;reseteamos los indices
+	
+	
+	mov bl, [colCur]
+	mov [col], bl
+
+	pintarArribaLoop:
+	
+	cmp [row], 0
+	jle endSunk	
+	dec [row]
+
+	call calcIndexP1
+	mov ebx, [indexMat]
+	mov al, [sea+ebx]
+	mov cl, [taulell+ebx]
+
+	cmp al, 0				;miramos la pos de arriba
+	je endSunk
+
+
+	mov [taulell+ebx], 'H'
+	call posCurScreenP1
+	call printch 
+	mov [sunk], 2
+	
+
+	jmp pintarArribaLoop
+
+;____________________________________________________________________________________________________________________
+
+	endSunk:
+
+
+	mov ebx, [rowCur]
+	mov [row], ebx	
+	mov bl, [colCur]
+	mov [col], bl
+	
+	call posCurScreenP1
+	call border
+
+	byeSunk:
+
+	mov ebx, [rowCur]
+	mov [row], ebx	
+	mov bl, [colCur]
+	mov [col], bl
+	
+	call posCurScreenP1
+
+	pop edx
+	pop ecx
+	pop ebx
+	pop eax
 
 	mov esp, ebp
 	pop ebp
@@ -658,11 +979,416 @@ sunk_boat:
 border:
 	push ebp
 	mov  ebp, esp
+	
+	push eax
+	push ebx
+	push ecx
+	push edx	
+	
+	mov al, 'O'
+	mov [carac], al
+
+
+;_____________________________________________________________________________________________________	
+;______________________________________ROW BORDER_____________________________________________________	
+;_____________________________________________________________________________________________________	
+
+
+;********************************************DERECHA**************************************************
+;____________________________________________________________________________________________________________________
+
+	borderDerechaLoop:
+	
+	inc [col]
+	cmp [col], 'H'
+	jg borderIzquierdaLoopStart
+
+
+	call calcIndexP1
+	mov edx, [indexMat]
+
+	mov al, [sea+edx]
+	mov cl, [taulell+edx]
+
+
+	cmp al, 0					;miramos la pos derecha
+	je preBorderIzquierdaLoopStart
+
+	cmp [row], 1
+	jle derechaMirarAbajo
+
+
+	dec [row]
+	call pintarOs
+	inc [row]
+
+	derechaMirarAbajo:
+	cmp [row], 8
+	jge derechaMirarDerecha
+
+
+	inc [row]
+	call pintarOs
+	dec[row]
+
+
+	derechaMirarDerecha:
+	cmp [col], 'H'
+	;jge preBorderIzquierdaLoopStart
+	jge borderIzquierdaLoopStart ;<---- Guay
+	
+	inc [col]	
+	call pintarOs
+	dec [col]
+	
+
+	jmp borderDerechaLoop
+
+
+;____________________________________________________________________________________________________________________
+
+	preBorderIzquierdaLoopStart:
+
+	call pintarOs
+
+	cmp [row], 1
+	jle preAbajoAbajo
+
+	call pintarOs
+
+	dec [row]
+	call pintarOs
+	inc [row]
+
+	preAbajoAbajo:
+	cmp [row], 8
+	jge borderIzquierdaLoop
+
+	inc [row]
+	call pintarOs
+	dec[row]
+
+	jmp borderIzquierdaLoopstart
+
+
+;********************************************DERECHA_FINAL**************************************************
+
+
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+
+;********************************************IZQUIERDA************************************************** 
+
+	borderIzquierdaLoopStart:
+
+
+	borderIzquierdaLoop:
+	
+	dec [col]
+	cmp [col], 'A'
+	jl borderAbajoLoopStart
+
+	call calcIndexP1
+	mov edx, [indexMat]
+
+	mov al, [sea+edx]
+	mov cl, [taulell+edx]
+
+	
+	cmp al, 0					;miramos la pos izquierda
+	je preBorderAbajoLoopStart
+
+	cmp [row], 1
+	jle izquierdaMirarAbajo
+
+	dec [row]
+	call pintarOs
+	inc [row]
+
+	izquierdaMirarAbajo:
+
+	cmp [row], 8 
+	jge izquierdaMirarDerecha
+
+
+	inc [row]
+	call pintarOs
+	dec[row]
+
+
+	izquierdaMirarDerecha:
+	cmp [col], 'A'
+	jle borderAbajoLoopStart
+	dec [col]	
+	call pintarOs
+	inc [col]
+	
+
+	jmp borderIzquierdaLoop
+
+
+;____________________________________________________________________________________________________________________
+
+	preBorderAbajoLoopStart:
+
+	call pintarOs
+
+	cmp [row], 1
+	jle preAbajoAbajo1
+
+	call pintarOs
+
+	dec [row]
+	call pintarOs
+	inc [row]
+
+	preAbajoAbajo1:
+	cmp [row], 8
+	jge borderAbajoLoopStart
+
+	inc [row]
+	call pintarOs
+	dec[row]
+
+	jmp borderAbajoLoopstart
+
+
+
+;********************************************IZQUIERDA_FINAL**************************************************
+
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+
+;********************************************ABAJO**************************************************
+
+	borderAbajoLoopStart:		
+	
+	mov ebx, [rowCur]
+	mov [row], ebx	
+	mov bl, [colCur]
+	mov [col], bl
+	
+	
+	borderAbajoLoop:
+		
+	inc [row]
+	cmp [row], 8 
+	jg borderArribaLoopStart
+
+	call calcIndexP1
+	mov edx, [indexMat]
+
+	mov al, [sea+edx]
+	mov cl, [taulell+edx]
+
+	
+	cmp al, 0					;miramos la pos abajo
+	je preBorderArribaLoopStart
+
+	cmp [col], 'A' 
+	jle abajoMirarDerecha
+
+	dec [col]
+	call pintarOs
+	inc [col]
+
+		
+	abajoMirarDerecha:
+	cmp [col], 'H'
+	jge abajoMirarAbajo 
+
+	inc [col]
+	call pintarOs
+	dec[col]
+
+
+	abajoMirarAbajo:
+	cmp [row], 8
+	jge preBorderArribaLoopStart
+	inc [row]	
+	call pintarOs
+	dec [row]
+	
+	jmp borderAbajoLoop
+
+	
+	;____________________________________________________________________________________________________________________
+
+	preBorderArribaLoopStart:
+
+	cmp [col], 'A'
+	jle preArribaDerecha
+
+	dec [col]
+	call pintarOs
+	inc [col]
+
+	preArribaDerecha:
+	cmp [col], 'H'
+	jge borderArribaLoopStart
+
+	inc [col]
+	call pintarOs
+	dec[col]
+
+	jmp borderArribaLoopStart
+
+
+
+;********************************************ABAJO_FINAL**************************************************
+
+
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+;____________________________________________________________________________________________________________________
+
+;********************************************ARRIBA**************************************************
+
+	borderArribaLoopStart:		
+	
+
+	
+	borderArribaLoop:
+		
+
+	dec [row]
+	cmp [row], 1 
+	jl endBorder
+
+	call calcIndexP1
+	mov edx, [indexMat]
+
+	mov al, [sea+edx]
+	mov cl, [taulell+edx]
+
+	
+	cmp al, 0					;miramos la pos arriba
+	je preBorderFinalLoopStart
+
+	cmp [col], 'A' 
+	jle arribaMirarDerecha
+
+	dec [col]
+	call pintarOs
+	inc [col]
+
+		
+	arribaMirarDerecha:
+	cmp [col], 'H'
+	jge arribaMirarArriba
+
+	inc [col]
+	call pintarOs
+	dec[col]
+
+
+	arribaMirarArriba:
+	cmp [row], 1
+	jge preBorderArribaLoopStart
+	dec [row]	
+	call pintarOs
+	inc [row]
+	
+	jmp borderAbajoLoop
+
+	
+	;____________________________________________________________________________________________________________________
+
+	preBorderFinalLoopStart:
+
+	cmp [col], 'A'
+	jle preFinalDerecha
+
+	call pintarOs
+
+	dec [col]
+	call pintarOs
+	inc [col]
+
+	preFinalDerecha:
+	cmp [col], 'H'
+	jge endBorder
+
+	call pintarOs
+
+	inc [col]
+	call pintarOs
+	dec[col]
+
+	jmp endBorder
+
+
+;********************************************ABAJO_FINAL**************************************************
 
 
 
 
+	endBorder:
 
+	mov ebx, [rowCur]
+	mov [row], ebx	
+	mov bl, [colCur]
+	mov [col], bl
+	
+	call posCurScreenP1
+
+	pop edx
+	pop ecx
+	pop ebx
+	pop eax
+
+	mov esp, ebp
+	pop ebp
+	
+
+	
+	;
+	;****************-*-*-*-*-*-*-*-**************************************************************************
+	;
+	;****************-*-*-*-*-*-*-*-**************************************************************************
+	
+	pintarOs:
+	push ebp
+	mov  ebp, esp
+	
+	push eax
+	push ebx
+	
+	
+	mov al, 'O'
+	mov [carac], al
+	call calcIndexP1
+	mov ebx, [indexMat]
+	cmp [sea+ebx], 1
+	je endPintarOs
+	mov [taulell+ebx], 'O'
+	call posCurScreenP1
+	call printch 
+
+	endPintarOs:
+
+	;
+	;****************-*-*-*-*-*-*-*-**************************************************************************
+	;
+	;********
+
+
+	pop ebx
+	pop eax
 
 	mov esp, ebp
 	pop ebp
